@@ -158,55 +158,51 @@ private:
         }
     }
 
-    template<integration_method U = Integration>
-    void perform_step_on_particles();
+    void perform_step_on_particles() {
+        // If constexpr is an if at compile-time
+        // That is, if Integration == integration_method::explicit_euler then the code inside the if block is compiled
+        // Otherwise, the code inside the other block is compiled
+        if constexpr (Integration == integration_method::explicit_euler) {
+            // Loop over particles
+            for (size_t i = 0; i < N_particles; ++i) {
+                // Reset the force
+                particles[i].reset_force();
+                // Compute forces
+                compute_all_forces(i);
+            }
+            // Update the position and velocity
+            for (size_t i = 0; i < N_particles; ++i) {
+                update_particle(i);
+                // Apply boundary conditions
+                apply_boundary_conditions(i);
+            }
+        } else if constexpr (Integration == integration_method::leapfrog) {
+            // Update the force at current position
+            for (size_t i = 0; i < N_particles; ++i) {
+                // Reset the force
+                particles[i].reset_force();
+                // Compute forces
+                compute_all_forces(i);
+            }
+            // First leapfrog step
+            for (size_t i = 0; i < N_particles; ++i) {
+                update_particle_leapfrog_first_step(i);
+            }
 
-    // Perform a step using the explicit Euler method
-    template <>
-    void perform_step_on_particles<integration_method::explicit_euler>() {
-        // Loop over particles
-        for (size_t i = 0; i < N_particles; ++i) {
-            // Reset the force
-            particles[i].reset_force();
-            // Compute forces
-            compute_all_forces(i);
-        }
-        // Update the position and velocity
-        for (size_t i = 0; i < N_particles; ++i) {
-            update_particle(i);
-            // Apply boundary conditions
-            apply_boundary_conditions(i);
-        }
-    }
+            // Update the force on the half step
+            for (size_t i = 0; i < N_particles; ++i) {
+                // Reset the force
+                particles[i].reset_force();
+                // Compute forces
+                compute_all_forces(i);
+            }
 
-    // Perform a step using the leapfrog method
-    template <>
-    void perform_step_on_particles<integration_method::leapfrog>() {
-        // Update the force at current position
-        for (size_t i = 0; i < N_particles; ++i) {
-            // Reset the force
-            particles[i].reset_force();
-            // Compute forces
-            compute_all_forces(i);
-        }
-        // First leapfrog step
-        for (size_t i = 0; i < N_particles; ++i) {
-            update_particle_leapfrog_first_step(i);
-        }
-
-        // Update the force on the half step
-        for (size_t i = 0; i < N_particles; ++i) {
-            // Reset the force
-            particles[i].reset_force();
-            // Compute forces
-            compute_all_forces(i);
-        }
-
-        // Second leapfrog step
-        for (size_t i = 0; i < N_particles; ++i) {
-            update_particle_leapfrog_second_step(i);
-            // Apply boundary conditions
-            apply_boundary_conditions(i);
+            // Second leapfrog step
+            for (size_t i = 0; i < N_particles; ++i) {
+                update_particle_leapfrog_second_step(i);
+                // Apply boundary conditions
+                apply_boundary_conditions(i);
+            }
         }
     }
 
