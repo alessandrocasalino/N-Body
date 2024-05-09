@@ -108,18 +108,31 @@ private:
         auto r_i = particles[i].get_position();
         auto r_j = particles[j].get_position();
         std::array<T, dim> r_ij;
-        for (size_t d = 0; d < dim; ++d) {
+
+        // std::transform below is analogous to
+        /*for (size_t d = 0; d < dim; ++d) {
             r_ij[d] = r_j[d] - r_i[d];
-        }
-        T r2 = epsilon;
+        }*/
+        std::transform(r_j.begin(), r_j.end(), r_i.begin(), r_ij.begin(), std::minus<T>());
+
+        // std::inner_product below is analogous to
+        /*T r2 = epsilon;
         for (size_t d = 0; d < dim; ++d) {
             r2 += r_ij[d] * r_ij[d];
-        }
+        }*/
+        T r2 = std::inner_product(r_ij.begin(), r_ij.end(), r_ij.begin(), epsilon);
+
         T r = std::sqrt(r2);
         T f = particles[i].get_mass() * particles[j].get_mass() / r2;
+
         for (size_t d = 0; d < dim; ++d) {
             particles[i].set_force(d, particles[i].get_force()[d] + f * r_ij[d] / r);
         }
+        // An alternative way to compute the force
+        /*std::array<T, dim> new_force;
+        std::transform(r_ij.begin(), r_ij.end(), particles[i].get_force().begin(), new_force.begin(),
+                       [f, r](T r_ij_d, T force_d) { return force_d + f * r_ij_d / r; });
+        particles[i].set_force(new_force);*/
     }
 
     // Compute forces between the particle i and all other particles
